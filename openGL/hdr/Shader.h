@@ -2,6 +2,9 @@
 #include <string>
 #include <unordered_map>
 
+#include "glm/matrix.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 struct ShaderProgramSource
 {
 	std::string VertexShader;
@@ -25,6 +28,7 @@ public:
 	//set uniforms
 	void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
 	void SetUniform1i(const std::string& name, int value);
+	void SetUniformMat4f(const std::string& name, const glm::mat4& matrix);
 
 private:
 	ShaderProgramSource ParseShader(const std::string& filePath);

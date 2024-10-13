@@ -14,6 +14,15 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
+#include "imgui/imgui.h"
+#include  "imgui/imgui_impl_opengl3.h"
+#include <imgui/imgui_impl_glfw.cpp>
+
+#include "Tests/TestClearColor.h"
+
 //#pragma region ShaderFunctions
 //static int CompileShader(unsigned int type, const std::string& source)
 //{
@@ -112,7 +121,7 @@ int main()
 	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE); //default 
 
 	//Create window
-	window = glfwCreateWindow(650, 450, "My_Window", NULL, NULL);
+	window = glfwCreateWindow(640, 440, "My_Window", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -130,105 +139,25 @@ int main()
 
 	//print version og 
 	std::cout << glGetString(GL_VERSION) << std::endl;
+
 	{
-
-		float positions[] = {
-			-0.5f, -0.5f,	0.0f, 0.0f, //0th index
-			 0.5f,  -0.5f,	1.0f, 0.0f,	//1 
-			 0.5f,	0.5f,	1.0f, 1.0f,	//2
-			-0.5f,	0.5f,	0.0f, 1.0f	//3rd index
-		};
-
-		unsigned int indicies[] = {
-		0,1,2,
-		2,3,0
-		};
 
 		CallLog(glEnable(GL_BLEND));
 		CallLog(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-		//Create vertex array
-		VertexArray va;
-
-		//VertexBuffer* vbo = new VertexBuffer(positions,  4*2*sizeof(float));
-		VertexBuffer vbo(positions, 4 * 4 * sizeof(float));
-		
-		VertexBufferLayout layout;
-		layout.Push<float>(2);
-		layout.Push<float>(2);
-
-		//Add buffer to array
-		va.AddBuffer(vbo, layout);
-
-		//enable vertex attribute
-		glEnableVertexAttribArray(0);
-
-		//assign attributes
-		//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
-
-		//Create index buffer object - ibo
-		//IndexBuffer* ibo = new IndexBuffer(indicies, 6);
-		IndexBuffer ibo(indicies, 6);
-
-#pragma region shader_String
-		std::string vertexShader =
-			"#version 330 core\n"
-			"\n"
-			"layout(location = 0) in vec4 position;\n"
-			"void main()\n"
-			"{\n"
-			"	gl_position = position;\n"
-			"}\n";
-
-		std::string fragmentShader =
-			"#version 330 core\n"
-			"\n"
-			"layout(location = 0) out vec4 color;\n"
-			"void main()\n"
-			"{\n"
-			"	color = vec4(1.0,0.0,0.0,1.0);\n"
-			"}\n";
-#pragma endregion
-
-#pragma region ShaderSrcProgram
-		std::string vertexShad =
-			"#version 330 core\n"
-			"\n"
-			"layout(location = 0) in vec4 position;\n"
-			"void main()\n"
-			"{\n"
-			"	gl_position = position;\n"
-			"}\n";
-
-		std::string fragmentShad =
-			"#version 330 core\n"
-			"\n"
-			"layout(location = 0) out vec4 color;\n"
-			"void main()\n"
-			"{\n"
-			"	color = vec4(1.0,0.5f,0.25f,0.0);\n"
-			"}\n";
-#pragma endregion
-
-		Shader shader("src/Basic_uniform.shader");
-		shader.Bind();
-		shader.SetUniform4f("u_color", 0.8f, 0.3f, 0.8f, 1.0f);
-
-		Texture texture("resource/textures/the_Cherno.png");
-		texture.Bind();
-		shader.SetUniform1i("u_Texture", 0);
-
-		//unbind buffer
-		va.Unbind();
-		vbo.Unbind();
-		ibo.Unbind();
-		shader.UnBind();
-
 		Renderer renderer;
 
-		float r = 0.1f;
-		float increment = 0.05f;
+
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+		ImGui_ImplOpenGL3_Init();
+		ImGui_ImplGlfw_InitForOpenGL(window, true);
+		
+		//ImGui::StyleColorsDark();
+		ImGui::StyleColorsClassic();
+
+		test::TestClearColor test1;
 
 		//loop till window is closed by user
 		while (!glfwWindowShouldClose(window))
@@ -237,41 +166,18 @@ int main()
 			//glClear(GL_COLOR_BUFFER_BIT);
 			renderer.Clear();
 
-			//bind shader
-			shader.Bind();
-			shader.SetUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
+			test1.OnUpdate(0.0f);
+			test1.OnRender();
 
-			renderer.Draw(va, ibo, shader);
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
 
-			/*Note: After vertex array is created, there is no need to bind vertex buffer & assign vertex attribute
-			Just need to bind the vertex array */
+			test1.OnImGuiRender();
 
-			//glBindBuffer(GL_ARRAY_BUFFER, buffer);
-			//glEnableVertexAttribArray(0);
-			//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+			CallLog(ImGui::Render());
+			CallLog(ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()));
 
-			//bind vertex array
-			//va.Bind();
-
-			//bind index buffer
-			//ibo->Bind();
-			//ibo.Bind();
-
-			//CallLog(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));
-
-
-			//CallLog(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
-
-			if (r > 1.0f)
-			{
-				increment = -0.05f;
-			}
-			else if (r < 0.0f)
-			{
-				increment = 0.05f;
-			}
-
-			r += increment;
 			//Swap front and back buffer
 			glfwSwapBuffers(window);
 
@@ -283,6 +189,10 @@ int main()
 		//delete vbo;
 		//delete ibo;
 	}
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	glfwTerminate();
 	return 0;
 }
